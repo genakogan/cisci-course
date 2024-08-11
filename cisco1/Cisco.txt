@@ -1,0 +1,428 @@
+# ======================================================================= #
+# Port security
+use sticky function
+commands: 
+0. "enable"
+1. "show ip interface brief"
+2. "show mac-address-table"
+3. "show port-security interface fa0/24"
+4. "interface fa0/24" - "shutdown", ("no shut"), "interface range fa0/1-23"
+5. "config terminal" - "interface fa0/24" - "switchport mode trunk"
+6. "switchport port-security"
+7. "show port-security"
+8. "show port-security interface fa0/24"
+9. "switchport mac-address sticky"
+
+# ======================================================================= #
+# Trunk/Native VLAN
+IEEE 802.1Q is a standard for VLAN tagging in Ethernet networks. It defines a method for tagging Ethernet frames with VLAN membership information, allowing switches to distinguish between different VLANs on the same physical network segment.
+commands: 
+0. enable
+1. show ip interface brief
+2. show interfaces fa0/13 switchport
+3. switchport mode dynamic desirable
+CDP - CDP is a Layer 2 proprietary protocol that is default-enabled on all Cisco devices including routers and switches and runs on all LAN and WAN media that support Subnetwork Access Protocol (SNAP).
+4. show cdp neighbors
+
+# ======================================================================= #
+# VTP - VLAN Trunking protocol
+1. delete flash:vlan.dat
+2. show vtp status
+# Operating modes: Server, Clientm Transparent
+1. vtp mode transparent
+
+# ======================================================================= #
+# VLAN configuration
+1. enable
+2. show vlan
+3. config terminal
+4. vlan 2
+5. name ACCOUNTING
+6. exit
+7. vlan 3
+8. name SALES
+9. exit
+10. config t
+11. interface range fa0/1-12
+12. switchport mode acces
+13. switchport access vlan 2
+14.exit
+15. interface range fa0/13-24
+16. switchport mode acces
+17. switchport access vlan 3
+18. exit
+19. show vlan
+20. config t
+21. interface range fa0/1-24
+22. spanning-tree portfast (disable protocol STP)
+23. (set IP address for pc0: 192.168.1.50)
+24. (set IP address for pc1: 192.168.1.51)
+25. (ping from p0 to p1: ping -t 192.168.1.51)
+26. (chaneg VLAN for p0 from VLAN1 to VLAN2)
+27. (ping from p1 to p0: ping -t 192.168.1.50)
+
+# ======================================================================= #
+# Trunking
+## for switch s1 (server)
+1. enable
+2. config t
+3. hostname S1
+4. line con 0
+5. logging synchronous
+6. no exec-timeout
+7. exit
+8. no ip domain
+9. no ip domain-lookup
+10. interface range fa0/1-24
+11. spanning-tree portfast
+12. show vlan
+13. config t
+14. vlan 2
+15. name ACCOUNTING
+16. exit
+17. vlan 3
+18. name SALES
+19. exit
+20. interface range fa0/1-12
+21. switchport mode acces
+22. switchport access vlan 2
+23. interface range fa0/14-24 (port 13 use for trunk)
+24. switchport mode acces
+25. switchport access vlan 3
+26. exit
+27. config t
+28. intrface fa0/13
+29. switchport mode trunk
+30. show vtp status (VTP Operating Mode: Server) 
+(synchronization between 2 vlans; Switch1: server, Switch2: client)
+31. (creating domain) vtp domain test.info
+## for switch s2 (client)
+32. enable
+33. config t
+34. hostname S2
+35. line con 0
+36. logging synchronous
+37. no exec-timeout
+38. exit
+39. no ip domain
+40. no ip domain-lookup
+41. interface range fa0/1-24
+42. spanning-tree portfast
+43. vtp mode client
+44. 31. (creating domain) vtp domain test.info
+45. show vtp status
+46. (connect two switches together using port 13) 
+47. show vlan
+48. interface range fa0/1-12
+49. switchport mode acces
+50. switchport access vlan 2
+51. interface range fa0/14-24 (port 13 use for trunk)
+52. switchport mode acces
+53. switchport access vlan 3
+54. show vlan
+55. add three computers with ip pc0: 192.168.1.50, pc1: 192.168.1.51, pc2: 192.168.1.52
+56. connect pc0 to port fa0/1, pc1 to port fa0/2, pc2 to port fa0/3
+
+# ======================================================================= #
+# Static routing
+## Router
+1. enable
+2. show ip interface brief
+3. add module NM-4A/S
+4. connect two routers with serial DCE (se1/0 to se1/0)
+5. connect router2 with switch0 and switch0 with computer0 using FastEthernet0/1
+6. connect router1 with switch1 and switch1 with computer1 using FastEthernet0/1
+7. config terminal
+8. hostname R1
+9. no ip domain-loolup
+10. interface se1/0
+11. ip address 192.168.0.1 255.255.255.0
+12. no shut
+13. config terminal
+14. interface fa0/1
+15. ip address 192.168.1.1 255.255.255.0
+16. no shut
+17. show ip interface brief
+18. config terminal
+19. hostname R2
+20. no ip domain-loolup
+21. interface se1/0
+22. ip address 192.168.1.1 255.255.255.0
+23. no shut
+24. exit
+25. interface fa0/1
+26. ip address 192.168.2.1 255.255.255.0
+27. no shut
+28. show ip interface brief
+29. add ip address to computer1: 192.168.1.50, add gateway: 192.168.1.1
+30. add ip address to computer0: 192.168.2.50, add gateway: 192.168.2.1
+31. (r2) show ip route‎
+32. (r2) ip route 192.168.1.0 255.255.255.0 192.168.0.1
+33. (r1) show ip route‎
+35. (r1) config t
+34. (r1) ip route 192.168.2.0 255.255.255.0 192.168.0.1
+35. connect two routers with second serial DCE (se1/1 to se1/1)
+36. interface se1/1
+37. ip address 192.168.3.1 255.255.255.0 # for route1
+38. no shut
+39. how ip interface brief
+40. interface se1/1
+41. ip address 192.168.3.2 255.255.255.0 # for route2
+42. no shut
+43. how ip interface brief
+44. (r1) ip route 192.168.2.0 255.255.255.0 192.168.3.2
+45. (r2) config terminal
+46. (r2) ip route 192.168.1.0 255.255.255.0 192.168.3.1
+47. (start adding administrative distance) no ip route 192.168.2.0 255.255.255.0 192.168.3.2
+48. (r1) ip route 192.168.2.0 255.255.255.0 192.168.3.2 10
+49. (r2) show ip route
+50. (r2) no ip route 192.168.1.0 255.255.255.0 192.168.3.1
+51. (r2) ip route 192.168.1.0 255.255.255.0 192.168.3.1 10 
+
+# ======================================================================= #
+# Routing between VLANs using router
+1. (switch) enable
+2. (switch) show vlan
+3. (switch) config t
+4. (switch) interfrace vlan 51
+5. (switch) exit
+6. (switch) interfrace vlan 52
+7. (switch) interface fa0/2
+8. (switch) switchport mode access
+9. (switch) switchport access vlan 51
+10. (switch) exit
+11. (switch) interface fa0/3
+12. (switch) switchport mode access
+13. (switch) switchport access vlan 53
+14. (switch) interface fa0/1
+15. (switch) switchport mode trunk
+16. (router) config t
+17. (router) interface fa0/0.51
+18. (router) encapsulation dot1Q 51
+19. (router) ip address 192.168.1.1. 255.255.255.0
+20. (router) interface fa0/0.52
+21. (router) encapsulation dot1Q 52
+22. (router) ip address 192.168.2.1. 255.255.255.0
+23. (router) show ip interface brief
+24. (router) intreface fa0/0
+25. no shut
+
+# ======================================================================= #
+# Routing between VLANs using switch (IE-2000)
+1. (switch) enable
+2. (switch) vlan 51
+3. (switch) exit
+4. (switch) vlan 52
+5. (switch) exit
+6. (switch) interface fa1/2
+7. (switch) switchport mode access
+8. (switch) switchport access vlan 51
+9. (switch) exit
+10. (switch) interface fa1/3
+11. (switch) switchport mode access
+12. (switch) switchport access vlan 52
+13. (switch) exit
+14. (switch) show vlan
+15. (switch) ip routing (switch in routing mode)
+16. (switch) interface vlan 51 (vlan51 changed state to up)
+17. (switch) ip address 192.168.1.1 255.255.255.0 
+18. (switch) exit 
+19. (switch) interface vlan 52 (vlan51 changed state to up)
+20. (switch) ip address 192.168.2.1 255.255.255.0 
+21. show ip interface brief
+
+# ======================================================================= #
+# DHCP configuration (using model from "Routing between VLANs using router")
+1. (router) enable 
+2. (router) configure terminal
+3. (router) ip dhcp excluded-address ?
+4. (router) ip dhcp excluded-address 192.168.1.1 ?
+
+5. (router) ip dhcp excluded-address 192.168.1.1 192.168.1.20
+5. (router) ip dhcp pool VLAN51
+6. (router) network 192.168.1.0 255.255.255.0
+7. (router) default-router 192.168.1.1
+8. (router) dns-server 192.168.1.1 
+9. (router) show run | include dhcp
+10. (router) show run | network
+11. (router) show ip dhcp binding
+
+12. (router) ip dhcp excluded-address 192.168.2.1 192.168.2.20
+13. (router) ip dhcp pool VLAN52
+14. (router) network 192.168.2.0 255.255.255.0
+15. (router) default-router 192.168.2.1
+16. (router) dns-server 192.168.2.1 
+17. (router) show run | include dhcp
+18. (router) show run | network
+19. (router) show ip dhcp binding
+
+# DHCP configuration (using server)
+1. (router) no ip dhcp pool VALN52
+2. (router) no ip dhcp pool VALN51
+3. (router) no ip dhcp excluded-address 192.168.2.1 192.168.2.20
+4. (router) no ip dhcp excluded-address 192.168.1.1 192.168.1.20
+5. (switch) interface fa0/4
+6. (swithc) switchport mode access vlan 51
+7. configuration server address: 192.168.1.200 255.255.255.0, gateway: 192.168.1.1
+8. activation dhsp server in SERVICES (adding first pool), default gateway: 192.168.1.1, DNS server: 192.168.1.1, start IP address: 192.168.1.21, maximum number of users: 200
+9. activation dhsp server in SERVICES (adding second pool), default gateway: 192.168.2.1, DNS server: 192.168.2.1, start IP address: 192.168.2.21, maximum number of users: 200
+10. (router) enable
+11. (router) config terminal
+12. (router) interface fa0/0.52
+13. (router) ip helper-address 192.168.1.200
+
+# ======================================================================= #
+# ACL - Access Control List
+## Создай стандартный ACL. Заблокируй доступ с адреса 192.168.5.1 на адрес 192.168.4.6 и на сеть 192.168.1.0
+1. (router1) enable
+2. (router1) config terminal
+3. (router1) ip access-list ?
+4. (router1) ip access-list standard
+5. (router1) ip access-list standard ACL1 #(ACL1 is a name)
+# steps: deny -> permit any
+6. (router1) deny ?
+7. (router1) deny host 192.168.5.1 
+8. (router1) exit
+9. (router1) interface se1/0
+10. (router1) ip access-group ACL1 in
+11. (router1) exit
+12. (router1) ip access-list standard ACL1
+13. (router1) permit any
+14. (router1) access-lists
+
+## Создай стандартный ACL. Заблокируй доступ из сети 192.168.2.0 к сети 192.168.1.0
+
+1. (router1) enable
+2. (router1) config terminal
+3. (router1) ip access-list standard ACL2
+4. (router1) deny 192.168.2.0 0.0.0.255
+5. (router1) permit any
+6. (router1) exit
+7. (router1) interface fa0/0
+8. (router1) ip access-group ACL2 out
+9. (router1) show access-list
+10. (router1)
+
+## Создай стандартный ACL. Заблокируй доступ c адреса 192.168.2.50 на адрес 192.168.5.1
+
+1. (router3) enable
+2. (router3) config terminal
+3. (router3) ip access-list standard ACL3
+4. (router3) deny host 192.168.2.50
+5. (router3) permit any
+6. (router3) exit
+7. (router3) interface se1/1
+8. (router3) ip access-group ACL3 in
+
+# ======================================================================= #
+# NAT - Network Address Translation
+
+1. (router0 - provider) enable
+2. (router0) ip interfece brief
+3. (router0) config terminal
+4. (ISP) hostname ISP
+5. (ISP) interface fa0/1
+6. (ISP) ip address 10.1.1.1 255.255.255.0
+7. (ISP) no shut
+8. (ISP) exit
+9. (ISP) interface fa0/0
+10. (ISP) ip address 1.1.1.1 255.255.255.0
+11. (ISP) no shut
+12. (ISP) show ip interface brief
+
+13. (ISP) ip dhcp pool ISP
+14. (ISP) network 1.1.1.0 255.255.255.0
+15. (ISP) default-router 1.1.1.1
+16. (ISP) dns-server 10.1.1.100
+
+17. (router1) enable	
+18. (router1) config terminal
+19. (router1) hostname Office
+20. (Office) interface fa0/0
+21. (Office) ip address dhcp
+22. (Office) no shut
+23. (Office) show ip interface brief
+24. (Office) config terminal
+25. (Office) interface fa0/1
+26. (Office) ip address 192.168.1.1 255.255.255.0
+27. (Office) no shut
+28. (Office) show ip interface brief
+
+29. (Office) enable
+39. (Office) config terminal
+40. (Office) ip access-list standard NAT
+41. (Office) permit 192.168.1.0 0.0.0.255
+42. (Office) show ip access-list
+43. (Office) show ip interface brief
+44. (Office) config terminal
+45. (Office) interface fa0/1
+46. (Office) ip nat inside
+47. (Office) exit
+48. (Office) interface fa0/0
+49. (Office) ip nat outside
+50. (Office) exit
+51. (Office) ip nat inside source list NAT interface fa0/0 (NAT activation command)
+52. (Office) 
+
+# ======================================================================= #
+# Static NAT
+
+1. (Office) enable
+2. (Office) config terminal
+3. (Office) ip nat inside source static tcp 192.168.1.100 80 1.1.1.2 80
+## 1.1.1.2 public ip address of Office router
+
+# ======================================================================= #
+# IPv6 (configuration)
+
+1. (router1) enable
+2. (router1) show ip interface brief
+3. (router1) show ipv6 interface brief
+4. (router1) config terminal 
+5. (router1) interface se1/0
+6. (router1) ipv6 address 2001:210:10:1::1/64
+7. (router1) no shut
+8. (router1) show ipv6 interface brief
+9. (router1) config terminal 
+10.(router1) interface fa0/0
+11. (router1) ipv6 address 2001:55:1::1/64
+12. (router1) no shut
+
+13. (router2) enable
+14. (router2) config terminal
+15. (router2) interface se1/0
+16. (router2) ipv6 address 2001:210:10:1::2/64
+17. (router2) no shut
+18. (router2) interface fa0/0
+19. (router2) ipv6 address 2001:56::1/64
+20. (router2) no shut
+21. (router2) show ipv6 interface brief
+22. (router2) show ipv6 route
+
+23. (router1) config terminal
+24. (router1) ipv6 unicast-routing
+25. (router1) ipv6 route 2001:56::/64 2001:210:10:1::2
+
+26. (router2) config terminal
+27. (router2) ipv6 unicast-routing
+28. (router2) ipv6 route 2001:55::64 2001:210:10:1::1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

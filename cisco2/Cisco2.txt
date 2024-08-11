@@ -1,0 +1,141 @@
+# ======================================================================= #
+# stp configuratio
+
+1. (switch1) enable
+2. (switch1) config terminal
+3. (switch1) hostanme Root
+4. (switch1) spanning-tree vlan 1 priority 4096
+5. (switch1) show spanning tree
+
+6. (switch2) enable
+7. (switch2) config terminal
+8. (switch2) hostname BackupR
+9. (switch2) spanning-tree vlan 1 priority 1
+10. (switch2) spanning-tree vlan 1 priority 8192
+
+## ieee to pvst in all switches
+11. (switch1) config terminal
+12. (switch1) spanning-tree mode ?ֹֹֹֹֹֹֹֹֹ
+13. (switch1) spanning-tree mode rapid-pvst
+14. (switch1) show spannig-tree
+
+# ======================================================================= #
+# Portfast & BPDU Guard
+
+a. spanning-tree vlan 1 root primary
+b. interface range fa 0/1-24
+c. spanning-tree portfast
+d. spanning-tree bpduguard enable
+
+# ======================================================================= #
+# Etherchannel configuration
+
+## s1 - s2 connection using LACP 
+1. (switch1) enable
+2. (switch1) config terminal
+3. (switch1) hostname S1
+4. (s1) show spanning-tree
+5. (s1) show ip interface brief
+6. (s1) config terminal
+7. (s1) interface range fa0/1-2
+8. (s1) shut
+9. (s1) channel-group 1 mode active
+10. (s1) no shut
+11. (switch1) enable
+12. (switch1) config terminal
+13. (switch1) hostname S2
+14. (s2) config terminal
+15. (s2) interface range fa0/1-2
+16. (s2) shut
+17. (s2) channel-group 1 mode passive
+18. (s2) no shut
+
+## s2 - s3 connection using PAgP
+19. (s2) config terminal
+20. (s2) interface range fa0/3-4
+21. (s2) shut
+22. (s2) channel-group 2 mode desirable
+23. (s2) no shut
+24. (s2) shoe ip interface brief
+25. (s3) enable
+26. (s3) config terminal
+27. (s3) interface range fa0/1-2
+28. (s3) shut
+29. (s3) channel-group 2 mode auto
+30. (s3) shoe ip interface brief
+31. (s3) show snapping-tree
+
+## s3 - s1 connection using Hardcoding
+32. (s3) config terminal
+33. (s3) interface range fa0/3-4
+34. (s3) no shut
+35. (s3) channel-group 3 mode on
+36. (s3) no shut
+
+# ======================================================================= #
+## Routing tables
+
+1. (r1) show ip protocols
+2. (r1) show ip route 
+
+## for all 4 routers
+3. (r1) enable
+4. (r1) config terminal
+5. (r1) router rip
+6. (r1) version 2
+7. (r1) network 10.0.0.0
+## ---------------------
+
+8. (r1) show ip route
+9. (r1) ip route 10.4.4.0 255.255.255.0 fastEthernet 0/0
+10. (r1) show ip route
+11. (r1) no ip route 10.4.4.0 255.255.255.0 fastEthernet 0/0
+12. (r1) config terminal 
+13. (r1) ip route 10.4.4.0 255.255.255.0 10.12.12.2
+14. (r1) no ip route 10.4.4.0 255.255.255.0 10.12.12.2
+15. (r1) ip route 10.4.0.0 255.255.255.0 10.12.12.2
+
+## floating static route
+16. (r1) ip route 10.4.4.0 255.255.255.0 10.1.1.100 121
+17. (r1) show ip route
+
+### remove connection r1 with r2 and check network status.
+18. (r1) show ip route
+19. (r1) no ip route 10.4.4.0 255.255.255.0 10.1.1.100 121
+### 10.1.1.30 provider address
+20. (r1) ip route 0.0.0.0 0.0.0.0 10.1.1.30 
+21. (r1) show ip route
+
+# ======================================================================= #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
